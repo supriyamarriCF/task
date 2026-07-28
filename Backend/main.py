@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 import json
 
-from database import conn, cursor
+from database import get_connection
 from schemas import Student
 
 
@@ -61,17 +61,18 @@ def home():
 @app.post("/students")
 def add_student(student: Student):
 
+    conn = get_connection()
+    cursor = conn.cursor()
+
     try:
 
         cursor.execute(
             """
             INSERT INTO students
             (name, age, course, email, phone, address)
-
             VALUES
-            (%s,%s,%s,%s,%s,%s)
+            (%s, %s, %s, %s, %s, %s)
             """,
-
             (
                 student.name,
                 student.age,
@@ -82,39 +83,32 @@ def add_student(student: Student):
             )
         )
 
-
         conn.commit()
 
-
-
         # Save data into JSON file
-
         save_student_json({
-
             "name": student.name,
             "age": student.age,
             "course": student.course,
             "email": student.email,
             "phone": student.phone,
             "address": student.address
-
         })
-
 
         return {
             "message": "Student Added Successfully"
         }
 
-
     except Exception as e:
-
         conn.rollback()
-
         raise HTTPException(
             status_code=500,
             detail=str(e)
         )
 
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
@@ -125,23 +119,19 @@ def add_student(student: Student):
 @app.get("/students")
 def get_students():
 
+    conn = get_connection()
+    cursor = conn.cursor()
+
     try:
 
-        cursor.execute(
-            "SELECT * FROM students"
-        )
-
+        cursor.execute("SELECT * FROM students")
 
         data = cursor.fetchall()
 
-
         students = []
 
-
         for s in data:
-
             students.append({
-
                 "id": s[0],
                 "name": s[1],
                 "age": s[2],
@@ -149,22 +139,23 @@ def get_students():
                 "email": s[4],
                 "phone": s[5],
                 "address": s[6]
-
             })
 
-
         return students
-
+    except HTTPException:
+        raise
 
     except Exception as e:
 
-
         raise HTTPException(
-
             status_code=500,
             detail=str(e)
-
         )
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
 
 
@@ -173,56 +164,52 @@ def get_students():
 # ==============================
 # READ STUDENT BY ID
 # ==============================
-
 @app.get("/students/{id}")
-def get_student(id:int):
+def get_student(id: int):
 
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    cursor.execute(
+    try:
 
-        "SELECT * FROM students WHERE id=%s",
-
-        (id,)
-
-    )
-
-
-    student = cursor.fetchone()
-
-
-
-    if student is None:
-
-
-        raise HTTPException(
-
-            status_code=404,
-
-            detail="Student not found"
-
+        cursor.execute(
+            "SELECT * FROM students WHERE id=%s",
+            (id,)
         )
 
+        student = cursor.fetchone()
 
+        if student is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
 
-    return {
+        return {
+            "id": student[0],
+            "name": student[1],
+            "age": student[2],
+            "course": student[3],
+            "email": student[4],
+            "phone": student[5],
+            "address": student[6]
+        }
 
+    except HTTPException:
+        raise
 
-        "id": student[0],
+    except Exception as e:
 
-        "name": student[1],
+        conn.rollback()
 
-        "age": student[2],
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
-        "course": student[3],
-
-        "email": student[4],
-
-        "phone": student[5],
-
-        "address": student[6]
-
-
-    }
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
@@ -233,78 +220,57 @@ def get_student(id:int):
 # ==============================
 
 @app.put("/students/{id}")
-def update_student(id:int, student:Student):
+def update_student(id: int, student: Student):
 
+    conn = get_connection()
+    cursor = conn.cursor()
 
     try:
 
-
         cursor.execute(
-
             """
             UPDATE students
-
             SET
-
-            name=%s,
-            age=%s,
-            course=%s,
-            email=%s,
-            phone=%s,
-            address=%s
-
-
+                name=%s,
+                age=%s,
+                course=%s,
+                email=%s,
+                phone=%s,
+                address=%s
             WHERE id=%s
-
             """,
-
             (
-
                 student.name,
-
                 student.age,
-
                 student.course,
-
                 student.email,
-
                 student.phone,
-
                 student.address,
-
                 id
-
             )
-
         )
-
 
         conn.commit()
 
-
-
         return {
-
-
-            "message":"Student Updated Successfully"
-
+            "message": "Student Updated Successfully"
         }
-
-
 
     except Exception as e:
 
-
         conn.rollback()
 
-
         raise HTTPException(
-
             status_code=500,
-
             detail=str(e)
-
         )
+
+    finally:
+        cursor.close()
+        conn.close()
+            
+
+          
 
 
 
@@ -314,47 +280,37 @@ def update_student(id:int, student:Student):
 # ==============================
 # DELETE STUDENT
 # ==============================
-
 @app.delete("/students/{id}")
-def delete_student(id:int):
+def delete_student(id: int):
 
+    conn = get_connection()
+    cursor = conn.cursor()
 
     try:
 
-
         cursor.execute(
-
             "DELETE FROM students WHERE id=%s",
-
             (id,)
-
         )
-
 
         conn.commit()
 
-
-
         return {
-
-
-            "message":"Student Deleted Successfully"
-
+            "message": "Student Deleted Successfully"
         }
 
-
+    except HTTPException:
+        raise
 
     except Exception as e:
 
-
         conn.rollback()
 
-
-
         raise HTTPException(
-
             status_code=500,
-
             detail=str(e)
+    )
 
-        )
+    finally:
+        cursor.close()
+        conn.close()
