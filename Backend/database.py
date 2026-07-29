@@ -3,8 +3,6 @@ import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
-
-
 def get_connection():
     """
     Creates and returns a new PostgreSQL connection.
