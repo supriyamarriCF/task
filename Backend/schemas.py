@@ -21,3 +21,14 @@ class Student(BaseModel):
         if not value.endswith("@gmail.com"):
             raise ValueError("Email must end with @gmail.com.")
         return value
+    @field_validator("age")
+
+    @classmethod
+
+    def validate_age(cls, value):
+
+        if value < 1 or value > 100:
+
+            raise ValueError("Age must be between 1 and 100.")
+
+        return value
