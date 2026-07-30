@@ -9,8 +9,6 @@ app = FastAPI(
     title="Student Management System"
 )
 
-
-
 # ==============================
 # JSON FILE STORAGE FUNCTION
 # ==============================
