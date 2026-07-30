@@ -1,12 +1,24 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import json
 
 from database import get_connection
 from schemas import Student
 
-
 app = FastAPI(
     title="Student Management System"
+)
+
+# ==============================
+# CORS CONFIGURATION
+# ==============================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change to your frontend URL in production if desired
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ==============================
@@ -16,27 +28,20 @@ app = FastAPI(
 def save_student_json(student_data):
 
     try:
-
         with open("students.json", "r") as file:
             students = json.load(file)
 
     except FileNotFoundError:
-
         students = []
-
 
     students.append(student_data)
 
-
     with open("students.json", "w") as file:
-
         json.dump(
             students,
             file,
             indent=4
         )
-
-
 
 # ==============================
 # HOME API
@@ -44,13 +49,9 @@ def save_student_json(student_data):
 
 @app.get("/")
 def home():
-
     return {
         "message": "Welcome to Student Management System"
     }
-
-
-
 
 # ==============================
 # CREATE STUDENT
@@ -83,7 +84,6 @@ def add_student(student: Student):
 
         conn.commit()
 
-        # Save data into JSON file
         save_student_json({
             "name": student.name,
             "age": student.age,
@@ -99,6 +99,7 @@ def add_student(student: Student):
 
     except Exception as e:
         conn.rollback()
+
         raise HTTPException(
             status_code=500,
             detail=str(e)
@@ -107,8 +108,6 @@ def add_student(student: Student):
     finally:
         cursor.close()
         conn.close()
-
-
 
 # ==============================
 # READ ALL STUDENTS
@@ -140,8 +139,6 @@ def get_students():
             })
 
         return students
-    except HTTPException:
-        raise
 
     except Exception as e:
 
@@ -154,14 +151,10 @@ def get_students():
         cursor.close()
         conn.close()
 
-
-
-
-
-
 # ==============================
 # READ STUDENT BY ID
 # ==============================
+
 @app.get("/students/{id}")
 def get_student(id: int):
 
@@ -198,8 +191,6 @@ def get_student(id: int):
 
     except Exception as e:
 
-        conn.rollback()
-
         raise HTTPException(
             status_code=500,
             detail=str(e)
@@ -208,10 +199,6 @@ def get_student(id: int):
     finally:
         cursor.close()
         conn.close()
-
-
-
-
 
 # ==============================
 # UPDATE STUDENT
@@ -266,18 +253,11 @@ def update_student(id: int, student: Student):
     finally:
         cursor.close()
         conn.close()
-            
-
-          
-
-
-
-
-
 
 # ==============================
 # DELETE STUDENT
 # ==============================
+
 @app.delete("/students/{id}")
 def delete_student(id: int):
 
@@ -297,9 +277,6 @@ def delete_student(id: int):
             "message": "Student Deleted Successfully"
         }
 
-    except HTTPException:
-        raise
-
     except Exception as e:
 
         conn.rollback()
@@ -307,7 +284,7 @@ def delete_student(id: int):
         raise HTTPException(
             status_code=500,
             detail=str(e)
-    )
+        )
 
     finally:
         cursor.close()

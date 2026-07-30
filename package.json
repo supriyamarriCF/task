@@ -1,0 +1,17 @@
+{
+  "name": "student-management-system",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "Frontend",
+    "Backend"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "dev:frontend": "npm --workspace Frontend run dev",
+    "dev:backend": "npm --workspace Backend run dev",
+    "start:backend": "npm --workspace Backend start",
+    "build": "npm --workspace Frontend run build",
+    "preview": "npm --workspace Frontend run preview"
+  }
+}

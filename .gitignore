@@ -1,0 +1,9 @@
+node_modules/
+dist/
+Frontend/dist/
+Backend/data/*.json
+!Backend/data/.gitkeep
+.env
+.env.*
+*.local
+npm-debug.log*
