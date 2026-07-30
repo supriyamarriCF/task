@@ -1,13 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import json
 
 from database import get_connection
 from schemas import Student
 
+
 app = FastAPI(
     title="Student Management System"
 )
+
 
 # ==============================
 # CORS CONFIGURATION
@@ -15,33 +16,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your frontend URL in production if desired
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ==============================
-# JSON FILE STORAGE FUNCTION
-# ==============================
-
-def save_student_json(student_data):
-
-    try:
-        with open("students.json", "r") as file:
-            students = json.load(file)
-
-    except FileNotFoundError:
-        students = []
-
-    students.append(student_data)
-
-    with open("students.json", "w") as file:
-        json.dump(
-            students,
-            file,
-            indent=4
-        )
 
 # ==============================
 # HOME API
@@ -52,6 +32,7 @@ def home():
     return {
         "message": "Welcome to Student Management System"
     }
+
 
 # ==============================
 # CREATE STUDENT
@@ -71,6 +52,7 @@ def add_student(student: Student):
             (name, age, course, email, phone, address)
             VALUES
             (%s, %s, %s, %s, %s, %s)
+            RETURNING id
             """,
             (
                 student.name,
@@ -82,22 +64,18 @@ def add_student(student: Student):
             )
         )
 
+        student_id = cursor.fetchone()[0]
+
         conn.commit()
 
-        save_student_json({
-            "name": student.name,
-            "age": student.age,
-            "course": student.course,
-            "email": student.email,
-            "phone": student.phone,
-            "address": student.address
-        })
-
         return {
-            "message": "Student Added Successfully"
+            "message": "Student Added Successfully",
+            "student_id": student_id
         }
 
+
     except Exception as e:
+
         conn.rollback()
 
         raise HTTPException(
@@ -105,9 +83,13 @@ def add_student(student: Student):
             detail=str(e)
         )
 
+
     finally:
+
         cursor.close()
         conn.close()
+
+
 
 # ==============================
 # READ ALL STUDENTS
@@ -121,14 +103,18 @@ def get_students():
 
     try:
 
-        cursor.execute("SELECT * FROM students")
+        cursor.execute(
+            "SELECT * FROM students"
+        )
 
         data = cursor.fetchall()
 
         students = []
 
         for s in data:
+
             students.append({
+
                 "id": s[0],
                 "name": s[1],
                 "age": s[2],
@@ -136,9 +122,12 @@ def get_students():
                 "email": s[4],
                 "phone": s[5],
                 "address": s[6]
+
             })
 
+
         return students
+
 
     except Exception as e:
 
@@ -147,9 +136,13 @@ def get_students():
             detail=str(e)
         )
 
+
     finally:
+
         cursor.close()
         conn.close()
+
+
 
 # ==============================
 # READ STUDENT BY ID
@@ -161,6 +154,7 @@ def get_student(id: int):
     conn = get_connection()
     cursor = conn.cursor()
 
+
     try:
 
         cursor.execute(
@@ -168,15 +162,20 @@ def get_student(id: int):
             (id,)
         )
 
+
         student = cursor.fetchone()
 
+
         if student is None:
+
             raise HTTPException(
                 status_code=404,
                 detail="Student not found"
             )
 
+
         return {
+
             "id": student[0],
             "name": student[1],
             "age": student[2],
@@ -184,10 +183,14 @@ def get_student(id: int):
             "email": student[4],
             "phone": student[5],
             "address": student[6]
+
         }
 
+
     except HTTPException:
+
         raise
+
 
     except Exception as e:
 
@@ -196,9 +199,13 @@ def get_student(id: int):
             detail=str(e)
         )
 
+
     finally:
+
         cursor.close()
         conn.close()
+
+
 
 # ==============================
 # UPDATE STUDENT
@@ -209,6 +216,7 @@ def update_student(id: int, student: Student):
 
     conn = get_connection()
     cursor = conn.cursor()
+
 
     try:
 
@@ -235,11 +243,29 @@ def update_student(id: int, student: Student):
             )
         )
 
+
+        if cursor.rowcount == 0:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
+
+
         conn.commit()
 
+
         return {
+
             "message": "Student Updated Successfully"
+
         }
+
+
+    except HTTPException:
+
+        raise
+
 
     except Exception as e:
 
@@ -250,9 +276,13 @@ def update_student(id: int, student: Student):
             detail=str(e)
         )
 
+
     finally:
+
         cursor.close()
         conn.close()
+
+
 
 # ==============================
 # DELETE STUDENT
@@ -264,6 +294,7 @@ def delete_student(id: int):
     conn = get_connection()
     cursor = conn.cursor()
 
+
     try:
 
         cursor.execute(
@@ -271,11 +302,29 @@ def delete_student(id: int):
             (id,)
         )
 
+
+        if cursor.rowcount == 0:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
+
+
         conn.commit()
 
+
         return {
+
             "message": "Student Deleted Successfully"
+
         }
+
+
+    except HTTPException:
+
+        raise
+
 
     except Exception as e:
 
@@ -286,6 +335,8 @@ def delete_student(id: int):
             detail=str(e)
         )
 
+
     finally:
+
         cursor.close()
         conn.close()

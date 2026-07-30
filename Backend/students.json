@@ -22,5 +22,13 @@
         "email": "string",
         "phone": "string",
         "address": "string"
+    },
+    {
+        "name": "string",
+        "age": 0,
+        "course": "string",
+        "email": "user@gmail.com",
+        "phone": "1234567890",
+        "address": "string"
     }
 ]
